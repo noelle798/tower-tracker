@@ -26,11 +26,11 @@ while(cv2.waitKey(1) & 0xFF != ord('q')):
 	cv2.imshow('image', np.hstack([image, masked]))
 
 	# erode and dilate
-	kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
-	# opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-	erosion = cv2.erode(mask, kernel, iterations = 1)
-	dilation = cv2.dilate(erosion, kernel, iterations = 2)
-	cv2.imshow("open", dilation)
+	# kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
+	# # opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+	# erosion = cv2.erode(mask, kernel, iterations = 1)
+	# dilation = cv2.dilate(erosion, kernel, iterations = 2)
+	# cv2.imshow("open", dilation)
 
 	# find and display contours
 	(contours, hierarchy) = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -44,11 +44,10 @@ while(cv2.waitKey(1) & 0xFF != ord('q')):
 	cv2.rectangle(control, (10, 10), (18, 58), (255, 255, 255), -1)
 	cv2.rectangle(control, (18, 51), (82, 58), (255, 255, 255), -1)
 	cv2.rectangle(control, (82, 10), (90, 58), (255, 255, 255), -1)
-	control = cv2.cvtColor(control, cv2.COLOR_BGR2GRAY)
-	(control_contours, hierarchy) = cv2.findContours(control, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-	cv2.drawContours(control, control_contours, -1, [0, 0, 255])
+	control_gray = cv2.cvtColor(control, cv2.COLOR_BGR2GRAY)
+	(control_contours, hierarchy) = cv2.findContours(control_gray, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+	cv2.drawContours(control, control_contours[0], -1, [0, 0, 255], 3)
 	cv2.imshow('control cont', control)
-	control_cnt = control_contours[0]
 
 	# # convex hull
 	# for contour in contours:
@@ -58,15 +57,17 @@ while(cv2.waitKey(1) & 0xFF != ord('q')):
 	#
 	# cv2.imshow('convex hull', image)
 
-	# approximate polygon
 	for cnt in contours:
-		cv2.drawContours(image, cnt, -1, [0,0,255])
-		cv2.drawContours(control, control_cnt, -1, [0,0,255])
-		cv2.imshow("match", control)
-		cv2.imshow("img", image)
-		ret = cv2.matchShapes(control_cnt, cnt, 1, 0.0)
-		print ret
-		cv2.drawContours(image, cnt, -1, [0, 0, 255], 5)
+		peri = cv2.arcLength(cnt, True)
+		approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
+		ret = cv2.matchShapes(control_contours[0], approx, 1, 0.0)
+		if ret < 30:
+			cv2.drawContours(image, approx, -1, [0,0,255], 3)
+			cv2.imshow("img", image)
+			print ret
+
+	# approximate polygon
+	# for cnt in contours:
 
 		# peri = cv2.arcLength(cnt, True)
 		# approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
