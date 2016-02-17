@@ -1,5 +1,16 @@
+import math
 import numpy as np
 import cv2
+
+def slope(point1, point2):
+	[x1, y1] = point1
+	[x2, y2] = point2
+	return (y2 - y1) / (x2 - x1)
+
+def dist(point1, point2):
+	[x1, y1] = point1
+	[x2, y2] = point2
+	return math.sqrt((x1 + x2)^2 + (y1 + y2)^2)
 
 cap = cv2.VideoCapture(2)
 
@@ -57,34 +68,30 @@ while(cv2.waitKey(1) & 0xFF != ord('q')):
 	#
 	# cv2.imshow('convex hull', image)
 
+	# approximate polygon
 	for cnt in contours:
 		peri = cv2.arcLength(cnt, True)
 		approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
-		ret = cv2.matchShapes(control_contours[0], approx, 1, 0.0)
-		if ret < 30:
-			cv2.drawContours(image, approx, -1, [0,0,255], 3)
-			cv2.imshow("img", image)
-			print ret
 
-	# approximate polygon
-	# for cnt in contours:
+		# if found something that might be tape
+		if len(approx) == 8:
+			tape = approx
 
-		# peri = cv2.arcLength(cnt, True)
-		# approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
-		#
-		# # if found something that might be tape
-		# if len(approx) == 8:
-		# 	tape = approx
-		#
-		# 	# display image of apparent tape
-		# 	cv2.drawContours(image, tape, -1, [0, 0, 255], 5)
-		# 	cv2.imshow("tape", image)
-		#
-		# 	# split points into four vertical lines
-		# 	print "tape:", tape
-		# 	# [[],[],[]...]
-		# 	print "indices:", tape[:,0].argsort()
-		# 	print "sorted tape:", tape[tape[:,0].argsort()]
+			# display image of apparent tape
+			cv2.drawContours(image, tape, -1, [0, 0, 255], 5)
+			cv2.imshow("tape", image)
+
+			# split points into four vertical-ish lines that should be parallel to each other
+			tape = [wrapped_point[0] for wrapped_point in tape]
+			print tape
+			tape = tape[tape[:,0].argsort()]
+			print "sorted tape:", tape
+
+			for i in range(len(tape) - 1):
+				point1 = tape[i]
+				point2 = tape[i+1]
+				print point1, point2
+				print "slope:", slope(point1, point2)
 
 	# convert image to grayscale and use canny edge detection
 	# gray = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
